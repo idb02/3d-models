@@ -1,1054 +1,844 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Clothing Customizer | Premium Quality</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #100d0b;
-            --panel-bg: rgba(255, 255, 255, 0.05);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-main: #f8f9fa;
-            --text-muted: #8b949e;
-            --accent: #6ee7b7;
-            /* sleek mint green */
-            --accent-glow: rgba(110, 231, 183, 0.4);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D T-Shirt Customizer</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.1);
+    --text: #f0f0f0;
+    --muted: #8b949e;
+    --accent: #6ee7b7;
+    --accent-glow: rgba(110,231,183,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: radial-gradient(ellipse at top, #1a1f2e 0%, var(--bg) 70%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at center, #1f232e 0%, var(--bg-color) 100%);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-title { font-weight: 700; font-size: 1rem; letter-spacing: -0.3px; }
+  .topbar-title span { color: var(--accent); }
+  .add-cart-btn {
+    padding: 0.6rem 1.4rem;
+    background: var(--accent);
+    color: #0b0c10;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+  .add-cart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--accent-glow); }
+  .add-cart-btn:active { transform: scale(0.97); }
 
-        .app-container {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            padding: 2rem;
-            box-sizing: border-box;
-            gap: 2rem;
-        }
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    overflow: hidden;
+    height: calc(100vh - 57px);
+  }
 
-        #display-view {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-        
-        #display-model-container {
-            width: 100%;
-            height: 70vh;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .customize-trigger-btn {
-            padding: 1.2rem 2.5rem;
-            background: var(--accent);
-            color: #0b0c10;
-            border: none;
-            border-radius: 12px;
-            font-family: inherit;
-            font-weight: 800;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 10px 30px var(--accent-glow);
-            margin-top: 1rem;
-            z-index: 20;
-        }
-        
-        .customize-trigger-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px var(--accent-glow);
-        }
+  /* ── 3D VIEWER ── */
+  .viewer-wrap {
+    flex: 1;
+    position: relative;
+    background: linear-gradient(160deg, rgba(255,255,255,0.02), rgba(0,0,0,0.4));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  model-viewer {
+    width: 100%;
+    height: 100%;
+    --poster-color: transparent;
+  }
+  .loader-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 10;
+    transition: opacity 0.5s;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid rgba(255,255,255,0.08);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { margin-top: 1rem; color: var(--muted); font-size: 0.85rem; }
 
-        #edit-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-color);
-            z-index: 1000;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        #edit-modal.visible {
-            display: block;
-            opacity: 1;
-        }
+  /* ── RIGHT PANEL ── */
+  .panel {
+    width: 360px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border);
+    background: var(--panel);
+    backdrop-filter: blur(20px);
+    overflow-y: auto;
+  }
 
-        .viewer-section {
-            flex: 1;
-            position: relative;
-            border-radius: 24px;
-            overflow: hidden;
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.5) 100%);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 1rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 1rem 0.5rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+  }
+  .tab.active { color: var(--text); }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
 
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            --poster-color: transparent;
-        }
+  /* ── PANEL CONTENT ── */
+  .tab-pane { display: none; padding: 1.25rem; flex-direction: column; gap: 1.25rem; }
+  .tab-pane.active { display: flex; }
 
-        .controls-section {
-            width: 450px;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            padding: 2.5rem;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            overflow-y: auto;
-            box-shadow: 20px 20px 60px rgba(0, 0, 0, 0.3);
-            box-sizing: border-box;
-        }
+  .section-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 0.1rem;
+  }
 
-        .controls-header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            background: linear-gradient(45deg, #fff, var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+  /* ── COLOR SWATCHES ── */
+  .swatch-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .swatch {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .swatch:hover, .swatch.active {
+    transform: scale(1.18);
+    border-color: #fff;
+    box-shadow: 0 0 12px rgba(255,255,255,0.25);
+  }
+  .custom-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: 2px solid var(--border); border-radius: 8px; }
 
-        .controls-header p {
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-            font-weight: 300;
-            line-height: 1.5;
-        }
+  /* ── MATERIAL LIST ── */
+  .mat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .mat-name { font-size: 0.9rem; font-weight: 600; }
+  .mat-hint { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+  /* ── SIZE SELECTOR ── */
+  .size-row { display: flex; gap: 0.6rem; }
+  .size-btn {
+    flex: 1; padding: 0.75rem 0;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .size-btn:hover { background: rgba(255,255,255,0.08); }
+  .size-btn.active {
+    background: var(--accent);
+    color: #0b0c10;
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px var(--accent-glow);
+  }
 
-        .control-label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
+  /* ── COLLAR TOGGLE ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .toggle-label { font-size: 0.9rem; font-weight: 600; }
+  .toggle-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.25s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-track::after { transform: translateX(20px); }
 
-        /* Color Swatches */
-        .color-swatches {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
+  /* ── DESIGN TAB INPUTS ── */
+  .input-field {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  .input-field:focus { outline: none; border-color: var(--accent); }
+  .action-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btn:hover { background: var(--accent); color: #0b0c10; border-color: var(--accent); }
+  .row2 { display: flex; gap: 0.6rem; }
+  .row2 .action-btn { font-size: 0.8rem; padding: 0.65rem 0.5rem; }
 
-        .color-swatch {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
+  /* ── CANVAS WRAPPER ── */
+  .canvas-wrap {
+    width: 100%;
+    aspect-ratio: 1/1;
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .canvas-bg { position: absolute; inset: 0; background: #fff; z-index: 0; }
 
-        .color-swatch:hover,
-        .color-swatch.active {
-            transform: scale(1.15);
-            border-color: #fff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-        }
+  /* ── SLIDER GROUP ── */
+  .slider-group { display: flex; align-items: center; gap: 0.75rem; }
+  .slider-label { width: 52px; font-size: 0.8rem; color: var(--muted); }
+  .slider-group input[type=range] { flex: 1; }
+  .del-btn {
+    width: 100%;
+    padding: 0.7rem;
+    background: rgba(209,73,91,0.15);
+    border: 1px solid rgba(209,73,91,0.4);
+    border-radius: 8px;
+    color: #f87171;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.25rem;
+  }
+  .del-btn:hover { background: rgba(209,73,91,0.35); }
 
-        /* Custom color picker */
-        .custom-color-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 0.5rem;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 0.5rem;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-        }
+  /* ── SAVED TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--accent);
+    color: #0b0c10;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 30px var(--accent-glow);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 9999;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
-            cursor: pointer;
-            background: none;
-            padding: 0;
-        }
-
-        input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
-        }
-
-        input[type="color"]::-webkit-color-swatch {
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-        }
-
-        .color-picker-label {
-            font-size: 0.95rem;
-            color: var(--text-main);
-            font-weight: 400;
-        }
-
-        /* Size Buttons */
-        .size-selector {
-            display: flex;
-            gap: 0.8rem;
-        }
-
-        .size-btn {
-            flex: 1;
-            padding: 1rem 0;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-main);
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .size-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .size-btn.active {
-            background: var(--accent);
-            color: #0b0c10;
-            border-color: var(--accent);
-            box-shadow: 0 5px 15px var(--accent-glow);
-        }
-
-        /* Loading state */
-        #loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            transition: opacity 0.5s ease;
-        }
-
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s infinite linear;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .nav-link {
-            margin-top: auto;
-            color: var(--text-muted);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: color 0.2s;
-            font-weight: 600;
-        }
-
-        .nav-link:hover {
-            color: var(--accent);
-        }
-
-        @media (max-width: 900px) {
-            .app-container {
-                flex-direction: column;
-                height: auto;
-                overflow-y: auto;
-                padding: 1rem;
-            }
-
-            .viewer-section {
-                height: 60vh;
-                min-height: 400px;
-                flex: none;
-            }
-
-            .controls-section {
-                width: 100%;
-                box-sizing: border-box;
-                padding: 1.5rem;
-            }
-        }
-
-        /* Tabs & Controls UI */
-        .tabs-header {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
-        }
-
-        .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .tab-btn.active {
-            color: var(--text-main);
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -0.6rem;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: var(--accent);
-            border-radius: 2px;
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-
-        .tab-content {
-            display: none;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .tab-content.active {
-            display: flex;
-        }
-
-        /* Material Item */
-        .material-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 1rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        /* Inputs */
-        .input-text {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-main);
-            font-family: inherit;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-
-        .input-text:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .action-btn {
-            width: 100%;
-            padding: 1rem;
-            background: var(--text-main);
-            color: #0b0c10;
-            border: none;
-            border-radius: 8px;
-            font-family: inherit;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        /* 2D Canvas Editor */
-        .canvas-container-wrapper {
-            background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 1rem;
-            border: 1px solid var(--border-color);
-            aspect-ratio: 1/1;
-            width: 100%;
-            position: relative;
-        }
-
-        .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 0.5rem;
-        }
-
-        .slider-group label {
-            width: 60px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .slider-group input[type='range'] {
-            flex: 1;
-        }
-
-        .canvas-background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #fff;
-            z-index: 0;
-        }
-
-        .lower-canvas,
-        .upper-canvas {
-            z-index: 1 !important;
-        }
-
-        #dynamic-materials-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-    </style>
+  @media (max-width: 700px) {
+    .main { flex-direction: column; height: auto; overflow: visible; }
+    .viewer-wrap { height: 55vw; min-height: 300px; }
+    .panel { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+  }
+</style>
 </head>
-
 <body>
 
-    <!-- Display View (Product Page Simulator) -->
-    <div id="display-view">
-        <div id="display-model-container">
-            <model-viewer id="main-display-model" src="shirt.glb" camera-controls auto-rotate rotation-per-second="10deg"
-                interaction-prompt="none" shadow-intensity="1.2" environment-image="neutral" exposure="1" scale="1 1 1">
-            </model-viewer>
-        </div>
-        <button id="open-customize-btn" class="customize-trigger-btn">Customize This Shirt</button>
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title">3D Customizer <span>Studio</span></div>
+  <button class="add-cart-btn" id="add-cart-btn">✓ Save &amp; Add to Cart</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- 3D VIEWER -->
+  <div class="viewer-wrap">
+    <div class="loader-wrap" id="loader">
+      <div class="spinner"></div>
+      <div class="loader-text">Loading 3D model…</div>
+    </div>
+    <model-viewer
+      id="mv"
+      src="https://idb02.github.io/3d-models/shirt.glb"
+      camera-controls
+      auto-rotate
+      rotation-per-second="8deg"
+      interaction-prompt="none"
+      shadow-intensity="1.2"
+      environment-image="neutral"
+      exposure="1.1"
+      scale="1 1 1">
+    </model-viewer>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab active" data-tab="colors">Colors</button>
+      <button class="tab" data-tab="design">Design</button>
+      <button class="tab" data-tab="size">Size</button>
     </div>
 
-    <!-- Edit Modal Overlay -->
-    <div id="edit-modal">
-        <div class="app-container">
-        <!-- 3D Viewer Area -->
-        <div class="viewer-section">
-            <div id="loading-overlay">
-                <div class="loader"></div>
-                <p style="margin-top: 1rem; color: var(--text-muted);">Loading High Fidelity Resource...</p>
-            </div>
+    <!-- COLORS TAB -->
+    <div class="tab-pane active" id="tab-colors">
 
-            <model-viewer id="customizer-model" src="shirt.glb" camera-controls auto-rotate rotation-per-second="10deg"
-                interaction-prompt="none" shadow-intensity="1.2" environment-image="neutral" exposure="1" scale="1 1 1">
-            </model-viewer>
+      <div>
+        <div class="section-label">Quick colors</div>
+        <div class="swatch-grid" id="swatch-grid">
+          <div class="swatch active" style="background:#ffffff" data-color="#ffffff"></div>
+          <div class="swatch" style="background:#1a1a1a" data-color="#1a1a1a"></div>
+          <div class="swatch" style="background:#2563eb" data-color="#2563eb"></div>
+          <div class="swatch" style="background:#dc2626" data-color="#dc2626"></div>
+          <div class="swatch" style="background:#16a34a" data-color="#16a34a"></div>
+          <div class="swatch" style="background:#ca8a04" data-color="#ca8a04"></div>
+          <div class="swatch" style="background:#9333ea" data-color="#9333ea"></div>
+          <div class="swatch" style="background:#db2777" data-color="#db2777"></div>
+          <div class="swatch" style="background:#0891b2" data-color="#0891b2"></div>
+          <div class="swatch" style="background:#ea580c" data-color="#ea580c"></div>
         </div>
+      </div>
 
-        <!-- Customization Controls -->
-        <div class="controls-section">
-            <div class="controls-header">
-                <h1>Craft Your Style</h1>
-                <p>Interact with the 3D garment. Mix colors on parts, add text, and upload graphics.</p>
-            </div>
-
-            <!-- Tabs -->
-            <div class="tabs-header">
-                <button class="tab-btn active" data-tab="tab-parts">Parts & Colors</button>
-                <button class="tab-btn" data-tab="tab-design">Design (Front)</button>
-            </div>
-
-            <!-- TAB: Parts & Colors -->
-            <div id="tab-parts" class="tab-content active">
-                <div class="control-group">
-                    <div class="control-label">Garment Parts</div>
-                    <div id="dynamic-materials-list">
-                        <p style="color:var(--text-muted); font-size: 0.9rem;">Loading parts...</p>
-                    </div>
-                </div>
-
-                <!-- Size Selection -->
-                <div class="control-group">
-                    <div class="control-label">Garment Size</div>
-                    <div class="size-selector">
-                        <button class="size-btn" data-scale="0.88">S</button>
-                        <button class="size-btn active" data-scale="1.0">M</button>
-                        <button class="size-btn" data-scale="1.12">L</button>
-                        <button class="size-btn" data-scale="1.25">XL</button>
-                    </div>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Volumetric scaling
-                        updates the digital twin's physical representation.</p>
-                </div>
-            </div>
-
-            <!-- TAB: Design & Text -->
-            <div id="tab-design" class="tab-content">
-                <div class="control-group">
-                    <div class="control-label">Add Text</div>
-                    <input type="text" id="custom-text-input" class="input-text" placeholder="Enter text here...">
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <input type="color" id="text-color-input" value="#000000">
-                        <span style="font-size: 0.9rem;">Text Color</span>
-                    </div>
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
-                        <select id="font-family-input" class="input-text" style="flex: 1; padding: 0.5rem;">
-                            <option value="Outfit">Outfit</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Courier New">Courier New</option>
-                            <option value="Comic Sans MS">Comic Sans MS</option>
-                        </select>
-                    </div>
-                    <button id="add-text-btn" class="action-btn">Place Text on Shirt</button>
-                </div>
-
-                <div class="control-group">
-                    <div class="control-label">Add Graphic/Logo</div>
-                    <input type="file" id="image-upload" accept="image/*" class="input-text"
-                        style="padding: 0.5rem; background: rgba(0,0,0,0.1);">
-                </div>
-
-                <div class="control-group">
-                    <div class="control-label">Add Shapes & Lines</div>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button id="add-line-btn" class="action-btn"
-                            style="flex:1; padding: 0.5rem; font-size: 0.9rem;">Straight Line</button>
-                        <button id="add-curve-btn" class="action-btn"
-                            style="flex:1; padding: 0.5rem; font-size: 0.9rem;">Curved Line</button>
-                        <button id="add-stripes-btn" class="action-btn"
-                            style="flex:1; padding: 0.5rem; font-size: 0.9rem;">Stripes Pattern</button>
-                    </div>
-                </div>
-
-                <div class="control-group"
-                    style="background: rgba(110, 231, 183, 0.1); padding: 1rem; border-radius: 8px;">
-                    <p style="margin:0; font-size: 0.9rem; color: var(--accent);">
-                        <strong>💡 Interactive Dragging:</strong> Use the massive square grid below to drag and
-                        reposition elements directly. What you see below precisely maps onto the 3D model above!
-                    </p>
-                </div>
-
-                <div class="control-group" id="design-tweaks" style="display:none; flex-direction:column; gap:0.5rem;">
-                    <div class="control-label">Tweak Elements (3D Workflow)</div>
-                    <select id="layer-selector" class="input-text"
-                        style="padding: 0.5rem; background: rgba(0,0,0,0.5);"></select>
-
-                    <div class="slider-group">
-                        <label>Scale</label>
-                        <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
-                    </div>
-                    <div class="slider-group">
-                        <label>Pos X</label>
-                        <input type="range" id="pos-x-slider" min="0" max="1024" step="10" value="512">
-                    </div>
-                    <div class="slider-group">
-                        <label>Pos Y</label>
-                        <input type="range" id="pos-y-slider" min="0" max="1024" step="10" value="512">
-                    </div>
-                    <button id="delete-element-btn" class="action-btn"
-                        style="background:#d1495b; color:white; margin-top:0.5rem;">Clear Design</button>
-                </div>
-
-                <!-- Hidden Fabric Canvas -->
-                <div class="canvas-container-wrapper" id="fabric-wrapper">
-                    <div class="canvas-background" id="canvas-bg"></div>
-                    <canvas id="design-canvas"></canvas>
-                </div>
-            </div>
-
-            <div style="margin-top: auto; display: flex; align-items: center; gap: 1rem; padding-top: 2rem;">
-                <button id="close-modal-btn" class="action-btn" style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main);">Cancel</button>
-                <button id="save-btn" class="action-btn" style="flex: 1; padding: 0.8rem 1.5rem; background: var(--accent); color: #0b0c10; font-weight: 800;">Update Model</button>
-            </div>
+      <div>
+        <div class="section-label">Custom color</div>
+        <div class="custom-row">
+          <input type="color" id="custom-color" value="#ffffff">
+          <span style="font-size:0.85rem">Pick any color for the shirt</span>
         </div>
-    </div>
+      </div>
+
+      <div>
+        <div class="section-label">Parts</div>
+        <div id="mat-list"><p style="color:var(--muted);font-size:0.85rem">Loading…</p></div>
+      </div>
+
+      <div>
+        <div class="section-label">Collar</div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Show collar</div>
+            <div class="toggle-sub">Toggle collar visibility</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="collar-toggle" checked>
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+      </div>
+
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const modelViewer = document.querySelector('#customizer-model');
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const sizeBtns = document.querySelectorAll('.size-btn');
-            const materialsListEl = document.getElementById('dynamic-materials-list');
+    <!-- DESIGN TAB -->
+    <div class="tab-pane" id="tab-design">
 
-            // Tab Elements
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
+      <div>
+        <div class="section-label">Add text</div>
+        <input type="text" class="input-field" id="text-input" placeholder="Your text here…">
+        <div style="display:flex;gap:0.75rem;align-items:center;margin-top:0.6rem">
+          <input type="color" id="text-color" value="#000000">
+          <select class="input-field" id="font-select" style="flex:1;padding:0.5rem 0.75rem">
+            <option value="Outfit">Outfit (default)</option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+        </div>
+        <button class="action-btn" id="add-text-btn" style="margin-top:0.6rem">Place text on shirt</button>
+      </div>
 
-            // Design Elements
-            const canvasWrapper = document.getElementById('fabric-wrapper');
-            const canvasBg = document.getElementById('canvas-bg');
-            const addTextBtn = document.getElementById('add-text-btn');
-            const textInput = document.getElementById('custom-text-input');
-            const textColorInput = document.getElementById('text-color-input');
-            const fontFamilyInput = document.getElementById('font-family-input');
+      <div>
+        <div class="section-label">Upload logo / graphic</div>
+        <input type="file" accept="image/*" id="img-upload" class="input-field" style="padding:0.5rem;cursor:pointer">
+      </div>
 
-            fontFamilyInput.addEventListener('change', (e) => {
-                if (currentDesignObj && currentDesignObj.type === 'text') {
-                    currentDesignObj.set('fontFamily', e.target.value);
-                    fCanvas.renderAll();
-                    syncTexture();
-                }
-            });
-            const imageUpload = document.getElementById('image-upload');
-            const deleteBtn = document.getElementById('delete-element-btn');
+      <div>
+        <div class="section-label">Shapes</div>
+        <div class="row2">
+          <button class="action-btn" id="line-btn">Line</button>
+          <button class="action-btn" id="curve-btn">Curve</button>
+          <button class="action-btn" id="stripes-btn">Stripes</button>
+        </div>
+      </div>
 
-            let materials = [];
-            let printMaterial = null;
+      <div id="tweaks-wrap" style="display:none;flex-direction:column;gap:0.75rem">
+        <div class="section-label">Selected element</div>
+        <select class="input-field" id="layer-sel" style="padding:0.5rem 0.75rem"></select>
+        <div class="slider-group"><span class="slider-label">Scale</span><input type="range" id="sl-scale" min="0.1" max="3" step="0.05" value="1"></div>
+        <div class="slider-group"><span class="slider-label">X pos</span><input type="range" id="sl-x" min="0" max="1024" step="8" value="512"></div>
+        <div class="slider-group"><span class="slider-label">Y pos</span><input type="range" id="sl-y" min="0" max="1024" step="8" value="512"></div>
+        <button class="del-btn" id="del-btn">Remove element</button>
+      </div>
 
-            // Patch for Fabric.js 5.x Chrome warning ('alphabetical' vs 'alphabetic')
-            const originalTextBaseline = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'textBaseline');
-            if (originalTextBaseline && originalTextBaseline.set) {
-                Object.defineProperty(CanvasRenderingContext2D.prototype, 'textBaseline', {
-                    configurable: true,
-                    set: function (val) {
-                        if (val === 'alphabetical') val = 'alphabetic';
-                        originalTextBaseline.set.call(this, val);
-                    },
-                    get: function () {
-                        return originalTextBaseline.get.call(this);
-                    }
-                });
-            }
+      <div>
+        <div class="section-label">Canvas (drag to reposition)</div>
+        <div class="canvas-wrap" id="canvas-wrap">
+          <div class="canvas-bg" id="canvas-bg"></div>
+          <canvas id="fc"></canvas>
+        </div>
+      </div>
 
-            // Initialize Fabric Canvas
-            const fCanvas = new fabric.Canvas('design-canvas', {
-                width: 1024,
-                height: 1024,
-                preserveObjectStacking: true
-            });
+    </div>
 
-            // Adjust display size to fit wrapper
-            const resizeCanvas = () => {
-                const wrapper = document.getElementById('fabric-wrapper');
-                if (!wrapper || wrapper.clientWidth === 0) return;
-                const width = wrapper.clientWidth;
-                fCanvas.wrapperEl.style.width = width + 'px';
-                fCanvas.wrapperEl.style.height = width + 'px';
-                fCanvas.lowerCanvasEl.style.width = width + 'px';
-                fCanvas.lowerCanvasEl.style.height = width + 'px';
-                fCanvas.upperCanvasEl.style.width = width + 'px';
-                fCanvas.upperCanvasEl.style.height = width + 'px';
-                fCanvas.calcOffset();
-            };
-            window.addEventListener('resize', resizeCanvas);
-            setTimeout(resizeCanvas, 300);
+    <!-- SIZE TAB -->
+    <div class="tab-pane" id="tab-size">
+      <div>
+        <div class="section-label">Select size</div>
+        <div class="size-row">
+          <button class="size-btn" data-scale="0.88" data-size="S">S</button>
+          <button class="size-btn active" data-scale="1.0" data-size="M">M</button>
+          <button class="size-btn" data-scale="1.12" data-size="L">L</button>
+          <button class="size-btn" data-scale="1.25" data-size="XL">XL</button>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:0.75rem;line-height:1.5">
+          Size updates the 3D model scale as a visual reference. Actual garment size will be based on your selection at checkout.
+        </p>
+      </div>
+    </div>
 
-            // Tab Switching Logic
-            tabBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    tabBtns.forEach(b => b.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.getElementById(btn.dataset.tab).classList.add('active');
-                    if (btn.dataset.tab === 'tab-design') {
-                        setTimeout(resizeCanvas, 50);
-                    }
-                });
-            });
+  </div>
+</div>
 
-            // --- 3D Model & Materials Logic ---
-            modelViewer.addEventListener('load', () => {
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => loadingOverlay.style.display = 'none', 500);
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Customization saved!</div>
 
-                materials = modelViewer.model.materials;
-                materialsListEl.innerHTML = '';
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mv = document.getElementById('mv');
+  const loader = document.getElementById('loader');
 
-                if (!materials || materials.length === 0) {
-                    materialsListEl.innerHTML = '<p>No materials found.</p>';
-                    return;
-                }
+  // ── State ──
+  const state = {
+    shirtColor: '#ffffff',
+    parts: {},       // matName → hex
+    collarVisible: true,
+    size: 'M',
+    scale: '1.0',
+    design: null,    // fabric JSON string
+    canvasBgColor: '#ffffff'
+  };
 
-                // First material acts as the print area default
-                printMaterial = materials.length > 1 ? materials[1] : materials[0];
+  let materials = [];
+  let printMaterial = null;
+  let collarMaterial = null;
+  let currentObj = null;
 
-                materials.forEach((mat, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'material-item';
+  // ── Fabric canvas ──
+  const fCanvas = new fabric.Canvas('fc', { width: 1024, height: 1024, preserveObjectStacking: true });
+  const canvasBg = document.getElementById('canvas-bg');
 
-                    const matName = mat.name || `Part ${index + 1}`;
-                    const label = document.createElement('span');
-                    label.style.fontWeight = '600';
-                    label.textContent = matName + (mat === printMaterial ? ' (Print Area)' : '');
+  const resizeCanvas = () => {
+    const wrap = document.getElementById('canvas-wrap');
+    if (!wrap || !wrap.clientWidth) return;
+    const w = wrap.clientWidth;
+    ['wrapperEl','lowerCanvasEl','upperCanvasEl'].forEach(k => {
+      fCanvas[k].style.width = w + 'px';
+      fCanvas[k].style.height = w + 'px';
+    });
+    fCanvas.calcOffset();
+  };
+  window.addEventListener('resize', resizeCanvas);
+  setTimeout(resizeCanvas, 400);
 
-                    const colorInput = document.createElement('input');
-                    colorInput.type = 'color';
-                    colorInput.value = '#ffffff';
-                    colorInput.className = 'mat-color-picker';
-                    colorInput.style.cssText = 'width:40px; height:40px; border:none; cursor:pointer; background:none; border-radius:8px;';
+  // ── Texture sync ──
+  const syncTexture = async () => {
+    if (!printMaterial) return;
+    try {
+      const url = fCanvas.toDataURL({ format: 'png', quality: 0.92, multiplier: 1 });
+      const tex = await mv.createTexture(url);
+      printMaterial.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
+      state.design = JSON.stringify(fCanvas.toJSON());
+      state.canvasBgColor = canvasBg.style.backgroundColor || '#ffffff';
+    } catch(e) { console.warn('Texture sync:', e); }
+  };
+  fCanvas.on('object:modified', syncTexture);
+  fCanvas.on('object:added', syncTexture);
+  fCanvas.on('object:removed', syncTexture);
 
-                    colorInput.addEventListener('input', (e) => {
-                        const hex = e.target.value;
-                        if (mat === printMaterial) {
-                            // Update Canvas Background -> triggers texture sync that paints model
-                            canvasBg.style.backgroundColor = hex;
-                            fCanvas.backgroundColor = hex;
-                            fCanvas.renderAll();
-                            syncTexture();
-                            mat.pbrMetallicRoughness.setBaseColorFactor('#ffffff');
-                        } else {
-                            mat.pbrMetallicRoughness.setBaseColorFactor(hex);
-                        }
-                    });
+  // ── Model load ──
+  mv.addEventListener('load', () => {
+    loader.style.opacity = '0';
+    setTimeout(() => loader.style.display = 'none', 500);
+    materials = mv.model.materials;
+    buildMatList();
+    if (printMaterial) {
+      printMaterial.pbrMetallicRoughness.setBaseColorFactor('#ffffff');
+      fCanvas.backgroundColor = '#ffffff';
+      fCanvas.renderAll();
+      syncTexture();
+    }
+  });
 
-                    item.appendChild(label);
-                    item.appendChild(colorInput);
-                    materialsListEl.appendChild(item);
-                });
+  // ── Build material list ──
+  const buildMatList = () => {
+    const list = document.getElementById('mat-list');
+    list.innerHTML = '';
+    if (!materials || !materials.length) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No materials found.</p>';
+      return;
+    }
+    printMaterial = materials.length > 1 ? materials[1] : materials[0];
 
-                if (printMaterial) {
-                    printMaterial.pbrMetallicRoughness.setBaseColorFactor('#ffffff'); // Keep neutral to show texture
-                    fCanvas.backgroundColor = '#ffffff';
-                    fCanvas.renderAll();
-                    syncTexture();
-                }
-            });
+    // Try to detect collar material by name
+    collarMaterial = materials.find(m => /collar|kolar|neck/i.test(m.name)) || null;
 
-            // --- Texture Sync Engine ---
-            const syncTexture = async () => {
-                if (!printMaterial) return;
-                try {
-                    const dataUrl = fCanvas.toDataURL({ format: 'png', quality: 0.9, multiplier: 1 });
-                    const texture = await modelViewer.createTexture(dataUrl);
-                    printMaterial.pbrMetallicRoughness.baseColorTexture.setTexture(texture);
-                } catch (error) {
-                    console.error("Texture sync failed:", error);
-                }
-            };
+    materials.forEach((mat, i) => {
+      const isPrint = mat === printMaterial;
+      const div = document.createElement('div');
+      div.className = 'mat-item';
+      div.innerHTML = `
+        <div>
+          <div class="mat-name">${mat.name || 'Part ' + (i+1)}</div>
+          <div class="mat-hint">${isPrint ? 'Print area (texture applied here)' : 'Solid color'}</div>
+        </div>
+        <input type="color" value="#ffffff" data-mat="${i}" style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;background:none;padding:0">
+      `;
+      div.querySelector('input').addEventListener('input', e => {
+        const hex = e.target.value;
+        state.parts[mat.name || i] = hex;
+        if (isPrint) {
+          canvasBg.style.backgroundColor = hex;
+          fCanvas.backgroundColor = hex;
+          fCanvas.renderAll();
+          syncTexture();
+        } else {
+          mat.pbrMetallicRoughness.setBaseColorFactor(hex);
+        }
+      });
+      list.appendChild(div);
+    });
+  };
 
-            fCanvas.on('object:modified', syncTexture);
-            fCanvas.on('object:added', syncTexture);
-            fCanvas.on('object:removed', syncTexture);
+  // ── Quick color swatches (apply to print material / canvas bg) ──
+  document.querySelectorAll('.swatch').forEach(s => {
+    s.addEventListener('click', () => {
+      document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+      const hex = s.dataset.color;
+      state.shirtColor = hex;
+      document.getElementById('custom-color').value = hex;
+      applyShirtColor(hex);
+    });
+  });
+  document.getElementById('custom-color').addEventListener('input', e => {
+    state.shirtColor = e.target.value;
+    document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    applyShirtColor(e.target.value);
+  });
+  const applyShirtColor = hex => {
+    if (!printMaterial) return;
+    canvasBg.style.backgroundColor = hex;
+    fCanvas.backgroundColor = hex;
+    fCanvas.renderAll();
+    syncTexture();
+    printMaterial.pbrMetallicRoughness.setBaseColorFactor('#ffffff');
+  };
 
-            // --- Design Actions ---
-            addTextBtn.addEventListener('click', async () => {
-                const text = textInput.value || "Your Text";
-                const color = textColorInput.value;
+  // ── Collar toggle ──
+  document.getElementById('collar-toggle').addEventListener('change', e => {
+    state.collarVisible = e.target.checked;
+    if (collarMaterial) {
+      const alpha = e.target.checked ? 1.0 : 0.0;
+      collarMaterial.pbrMetallicRoughness.setBaseColorFactor(
+        e.target.checked ? [1,1,1,1] : [0,0,0,0]
+      );
+    }
+    // If no named collar material, scale-hide a part (fallback: toggle mat[0] alpha)
+    if (!collarMaterial && materials.length > 0) {
+      const m = materials[0];
+      const factor = e.target.checked ? [1,1,1,1] : [0,0,0,0];
+      m.pbrMetallicRoughness.setBaseColorFactor(factor);
+    }
+  });
 
-                // Ensure fonts are loaded before adding text
-                await document.fonts.ready;
+  // ── Tab switching ──
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('tab-' + t.dataset.tab).classList.add('active');
+      if (t.dataset.tab === 'design') setTimeout(resizeCanvas, 60);
+    });
+  });
 
-                const textObj = new fabric.Text(text, {
-                    left: 512,
-                    top: 512,
-                    originX: 'center',
-                    originY: 'center',
-                    fontFamily: fontFamilyInput.value || 'Outfit',
-                    fontSize: 100,
-                    fill: color,
-                    fontWeight: 800
-                });
+  // ── Size buttons ──
+  document.querySelectorAll('.size-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.size-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.size = b.dataset.size;
+      state.scale = b.dataset.scale;
+      mv.scale = `${b.dataset.scale} ${b.dataset.scale} ${b.dataset.scale}`;
+    });
+  });
 
-                fCanvas.add(textObj);
-                fCanvas.renderAll(); // Force render before sync
-                trackObject(textObj);
-                syncTexture();
-            });
+  // ── Font change ──
+  document.getElementById('font-select').addEventListener('change', e => {
+    if (currentObj && currentObj.type === 'text') {
+      currentObj.set('fontFamily', e.target.value);
+      fCanvas.renderAll();
+      syncTexture();
+    }
+  });
 
-            imageUpload.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+  // ── Add text ──
+  document.getElementById('add-text-btn').addEventListener('click', async () => {
+    await document.fonts.ready;
+    const t = new fabric.Text(document.getElementById('text-input').value || 'Your Text', {
+      left: 512, top: 512,
+      originX: 'center', originY: 'center',
+      fontFamily: document.getElementById('font-select').value,
+      fontSize: 100, fontWeight: 800,
+      fill: document.getElementById('text-color').value
+    });
+    fCanvas.add(t);
+    fCanvas.renderAll();
+    track(t);
+    syncTexture();
+  });
 
-                const reader = new FileReader();
-                reader.onload = (f) => {
-                    const data = f.target.result;
-                    fabric.Image.fromURL(data, (img) => {
-                        if (img.width > 600) {
-                            img.scaleToWidth(600);
-                        }
-                        img.set({
-                            left: 512,
-                            top: 512,
-                            originX: 'center',
-                            originY: 'center'
-                        });
-                        fCanvas.add(img);
-                        fCanvas.renderAll(); // Force render before sync
-                        trackObject(img);
-                        syncTexture();
-                    });
-                };
-                reader.readAsDataURL(file);
-            });
+  // ── Upload image ──
+  document.getElementById('img-upload').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = f => {
+      fabric.Image.fromURL(f.target.result, img => {
+        if (img.width > 600) img.scaleToWidth(600);
+        img.set({ left: 512, top: 512, originX: 'center', originY: 'center' });
+        fCanvas.add(img); fCanvas.renderAll(); track(img); syncTexture();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
 
-            const layerSelector = document.getElementById('layer-selector');
-            const addLineBtn = document.getElementById('add-line-btn');
-            const addCurveBtn = document.getElementById('add-curve-btn');
-            const addStripesBtn = document.getElementById('add-stripes-btn');
+  // ── Shapes ──
+  document.getElementById('line-btn').addEventListener('click', () => {
+    const l = new fabric.Line([0, 512, 1024, 512], {
+      stroke: document.getElementById('text-color').value || '#000',
+      strokeWidth: 20, selectable: true,
+      originX: 'center', originY: 'center', left: 512, top: 512
+    });
+    fCanvas.add(l); fCanvas.renderAll(); track(l); syncTexture();
+  });
+  document.getElementById('curve-btn').addEventListener('click', () => {
+    const p = new fabric.Path('M 200 512 Q 512 200 800 512', {
+      fill: '', stroke: document.getElementById('text-color').value || '#000',
+      strokeWidth: 20, selectable: true,
+      originX: 'center', originY: 'center', left: 512, top: 512
+    });
+    fCanvas.add(p); fCanvas.renderAll(); track(p); syncTexture();
+  });
+  document.getElementById('stripes-btn').addEventListener('click', () => {
+    const lines = Array.from({length: 15}, (_, i) =>
+      new fabric.Line([-2000, i*80-400, 2000, i*80-400], {
+        stroke: document.getElementById('text-color').value || '#000', strokeWidth: 28
+      })
+    );
+    const g = new fabric.Group(lines, { left: 512, top: 512, originX: 'center', originY: 'center' });
+    fCanvas.add(g); fCanvas.renderAll(); track(g); syncTexture();
+  });
 
-            const updateLayerSelector = () => {
-                if (!layerSelector) return;
-                layerSelector.innerHTML = '';
-                const objects = fCanvas.getObjects();
-                if (objects.length === 0) {
-                    designTweaks.style.display = 'none';
-                    return;
-                }
+  // ── Tweaks panel ──
+  const tweaksWrap = document.getElementById('tweaks-wrap');
+  const layerSel = document.getElementById('layer-sel');
+  const slScale = document.getElementById('sl-scale');
+  const slX = document.getElementById('sl-x');
+  const slY = document.getElementById('sl-y');
 
-                designTweaks.style.display = 'flex';
-                objects.forEach((obj, idx) => {
-                    const opt = document.createElement('option');
-                    opt.value = idx;
-                    let typeName = obj.type;
-                    if (obj.text) typeName = `Text: "${obj.text.substring(0, 6)}"`;
-                    opt.text = `[${idx + 1}] ${typeName}`;
-                    if (obj === currentDesignObj) opt.selected = true;
-                    layerSelector.appendChild(opt);
-                });
-            };
+  const updateLayerSel = () => {
+    layerSel.innerHTML = '';
+    const objs = fCanvas.getObjects();
+    if (!objs.length) { tweaksWrap.style.display = 'none'; return; }
+    tweaksWrap.style.display = 'flex';
+    objs.forEach((o, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.text = `[${i+1}] ${o.text ? 'Text: "' + o.text.slice(0,8) + '"' : o.type}`;
+      if (o === currentObj) opt.selected = true;
+      layerSel.appendChild(opt);
+    });
+  };
+  layerSel.addEventListener('change', e => {
+    const o = fCanvas.item(parseInt(e.target.value));
+    if (o) { currentObj = o; fCanvas.setActiveObject(o); updateSliders(o); }
+  });
+  const updateSliders = o => {
+    if (!o) return;
+    slScale.value = o.scaleX || 1;
+    slX.value = o.left || 512;
+    slY.value = o.top || 512;
+  };
+  const track = o => {
+    currentObj = o; fCanvas.setActiveObject(o); updateSliders(o); updateLayerSel();
+  };
+  slScale.addEventListener('input', e => {
+    if (currentObj) { currentObj.scale(parseFloat(e.target.value)); fCanvas.renderAll(); syncTexture(); }
+  });
+  slX.addEventListener('input', e => {
+    if (currentObj) { currentObj.set({ left: parseInt(e.target.value) }); fCanvas.renderAll(); syncTexture(); }
+  });
+  slY.addEventListener('input', e => {
+    if (currentObj) { currentObj.set({ top: parseInt(e.target.value) }); fCanvas.renderAll(); syncTexture(); }
+  });
+  document.getElementById('del-btn').addEventListener('click', () => {
+    if (!currentObj) return;
+    fCanvas.remove(currentObj);
+    const objs = fCanvas.getObjects();
+    currentObj = objs.length ? objs[objs.length - 1] : null;
+    if (currentObj) { fCanvas.setActiveObject(currentObj); updateSliders(currentObj); }
+    updateLayerSel();
+    fCanvas.renderAll();
+    syncTexture();
+  });
 
-            if (layerSelector) {
-                layerSelector.addEventListener('change', (e) => {
-                    const idx = parseInt(e.target.value);
-                    const obj = fCanvas.item(idx);
-                    if (obj) {
-                        currentDesignObj = obj;
-                        fCanvas.setActiveObject(obj);
-                        updateSlidersUI(obj);
-                    }
-                });
-            }
+  // ── Add to Cart — saves to localStorage then notifies Wix ──
+  document.getElementById('add-cart-btn').addEventListener('click', async () => {
+    // Capture canvas snapshot as base64 for preview pages
+    const previewImg = fCanvas.toDataURL({ format: 'png', quality: 0.8, multiplier: 0.5 });
+    const saveState = {
+      shirtColor: state.shirtColor,
+      parts: state.parts,
+      collarVisible: state.collarVisible,
+      size: state.size,
+      scale: state.scale,
+      design: state.design,
+      canvasBgColor: state.canvasBgColor,
+      previewImg,          // thumbnail used on cart/checkout
+      glbSrc: 'https://idb02.github.io/3d-models/shirt.glb',
+      savedAt: Date.now()
+    };
+    try {
+      localStorage.setItem('wix_3d_customization', JSON.stringify(saveState));
+    } catch(e) { console.warn('localStorage:', e); }
 
-            if (addLineBtn) {
-                addLineBtn.addEventListener('click', () => {
-                    const line = new fabric.Line([0, 512, 1024, 512], {
-                        stroke: textColorInput.value || '#ffffff',
-                        strokeWidth: 20,
-                        selectable: true,
-                        evented: true,
-                        originX: 'center',
-                        originY: 'center',
-                        left: 512,
-                        top: 512
-                    });
-                    fCanvas.add(line);
-                    fCanvas.renderAll();
-                    trackObject(line);
-                    syncTexture();
-                });
-            }
+    // Tell the parent Wix page via postMessage so Velo can trigger addToCart
+    window.parent.postMessage({ type: 'ADD_TO_CART', customization: saveState }, '*');
 
-            if (addCurveBtn) {
-                addCurveBtn.addEventListener('click', () => {
-                    const path = new fabric.Path('M 200 512 Q 512 200 800 512', {
-                        fill: '',
-                        stroke: textColorInput.value || '#ffffff',
-                        strokeWidth: 20,
-                        selectable: true,
-                        originX: 'center',
-                        originY: 'center',
-                        left: 512,
-                        top: 512
-                    });
-                    fCanvas.add(path);
-                    fCanvas.renderAll();
-                    trackObject(path);
-                    syncTexture();
-                });
-            }
+    // Show toast
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+  });
 
-            if (addStripesBtn) {
-                addStripesBtn.addEventListener('click', () => {
-                    const stripes = [];
-                    for (let i = 0; i < 15; i++) {
-                        stripes.push(new fabric.Line([-2000, i * 80 - 400, 2000, i * 80 - 400], {
-                            stroke: textColorInput.value || '#ffffff',
-                            strokeWidth: 30
-                        }));
-                    }
-                    const group = new fabric.Group(stripes, {
-                        left: 512,
-                        top: 512,
-                        originX: 'center',
-                        originY: 'center',
-                    });
-                    fCanvas.add(group);
-                    fCanvas.renderAll();
-                    trackObject(group);
-                    syncTexture();
-                });
-            }
-
-            // Sliders for 3D placement
-            const designTweaks = document.getElementById('design-tweaks');
-            const scaleSlider = document.getElementById('scale-slider');
-            const posXSlider = document.getElementById('pos-x-slider');
-            const posYSlider = document.getElementById('pos-y-slider');
-
-            let currentDesignObj = null;
-
-            const updateSlidersUI = (obj) => {
-                if (obj) {
-                    designTweaks.style.display = 'flex';
-                    scaleSlider.value = obj.scaleX;
-                    posXSlider.value = obj.left;
-                    posYSlider.value = obj.top;
-                } else {
-                    designTweaks.style.display = 'none';
-                }
-            };
-
-            const trackObject = (obj) => {
-                currentDesignObj = obj;
-                fCanvas.setActiveObject(obj);
-                updateSlidersUI(obj);
-                if (typeof updateLayerSelector === 'function') updateLayerSelector();
-            };
-
-            scaleSlider.addEventListener('input', (e) => {
-                if (currentDesignObj) {
-                    currentDesignObj.scale(parseFloat(e.target.value));
-                    fCanvas.renderAll();
-                    syncTexture();
-                }
-            });
-
-            posXSlider.addEventListener('input', (e) => {
-                if (currentDesignObj) {
-                    currentDesignObj.set({ left: parseInt(e.target.value) });
-                    fCanvas.renderAll();
-                    syncTexture();
-                }
-            });
-
-            posYSlider.addEventListener('input', (e) => {
-                if (currentDesignObj) {
-                    currentDesignObj.set({ top: parseInt(e.target.value) });
-                    fCanvas.renderAll();
-                    syncTexture();
-                }
-            });
-
-            deleteBtn.addEventListener('click', () => {
-                if (currentDesignObj) {
-                    fCanvas.remove(currentDesignObj);
-                    const objects = fCanvas.getObjects();
-                    if (objects.length > 0) {
-                        currentDesignObj = objects[objects.length - 1];
-                        trackObject(currentDesignObj);
-                    } else {
-                        currentDesignObj = null;
-                        updateSlidersUI(null);
-                        if (typeof updateLayerSelector === 'function') updateLayerSelector();
-                    }
-                    fCanvas.renderAll();
-                    syncTexture();
-                }
-            });
-
-            // Size buttons
-            sizeBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    sizeBtns.forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    const scaleFactor = e.currentTarget.dataset.scale;
-                    modelViewer.scale = `${scaleFactor} ${scaleFactor} ${scaleFactor}`;
-                });
-            });
-
-            // Modal Control & Update Logic
-            const editModal = document.getElementById('edit-modal');
-            const openCustomizeBtn = document.getElementById('open-customize-btn');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            const mainDisplayModel = document.getElementById('main-display-model');
-
-            openCustomizeBtn.addEventListener('click', () => {
-                editModal.classList.add('visible');
-                // Wait for modal to become visible before forcing canvas rendering updates
-                setTimeout(resizeCanvas, 50);
-            });
-
-            closeModalBtn.addEventListener('click', () => {
-                editModal.classList.remove('visible');
-            });
-
-            const saveBtn = document.getElementById('save-btn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', async () => {
-                    const originalText = saveBtn.textContent;
-                    saveBtn.textContent = 'Updating...';
-                    try {
-                        const glTF = await modelViewer.exportScene();
-                        const blob = new Blob([glTF], { type: 'model/gltf-binary' });
-                        const url = URL.createObjectURL(blob);
-                        
-                        // Clean up previous blob URL if it exists
-                        if (mainDisplayModel.src && mainDisplayModel.src.startsWith('blob:')) {
-                            URL.revokeObjectURL(mainDisplayModel.src);
-                        }
-                        
-                        // Apply updated model directly onto display view
-                        mainDisplayModel.src = url;
-                        
-                        // Close modal on success
-                        editModal.classList.remove('visible');
-                    } catch (error) {
-                        console.error('Error exporting model:', error);
-                        alert('Could not update the customized model.');
-                    } finally {
-                        saveBtn.textContent = originalText;
-                    }
-                });
-            }
-        });    </script>
+  // ── Fabric.js alphabetic baseline patch ──
+  const orig = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'textBaseline');
+  if (orig && orig.set) {
+    Object.defineProperty(CanvasRenderingContext2D.prototype, 'textBaseline', {
+      configurable: true,
+      set(v) { orig.set.call(this, v === 'alphabetical' ? 'alphabetic' : v); },
+      get() { return orig.get.call(this); }
+    });
+  }
+});
+</script>
 </body>
-
 </html>
